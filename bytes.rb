@@ -37,6 +37,17 @@ class Bytes
     self.class == other.class && self.bytes == other.bytes
   end
 
+  def <<(data)
+    if data.is_a?(Fixnum) && (0..255) === data
+      @bytes.push(data)
+    elsif data.is_a?(Array) &&
+          data.all? { |x| x.is_a?(Fixnum) && (0..255) === x }
+      @bytes.concat(data)
+    else
+      fail TypeError, "data elements must be byte-sized integers"
+    end
+  end
+
 	def ^(other)
 		ret = self.zip(other).delete_if { |b1, b2| b1.nil? or b2.nil? }
 		Bytes.new(ret.map! { |b1, b2| b1 ^ b2 })
