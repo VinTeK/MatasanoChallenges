@@ -54,16 +54,17 @@ if DO_RUN.include?(:chal4)
   puts '================Challenge 4:================'
 
   File.readlines('files/4.txt').each do |line|
-    b = Bytes.new(line.chomp, :hex)
+    ctext = Bytes.new(line.chomp, :hex)
 
     (0..127).each do |i|
-      guess = Array.new(b.length, i.chr).join
-      result = b ^ Bytes.new(guess)
-      prob = Cryptanalysis.prob_english(result.ascii)
+      key = Array.new(ctext.length, i.chr).join
+      pt = ctext ^ Bytes.new(key)
+      prob = Cryptanalysis.prob_english(pt.ascii)
+      english_chars = pt.ascii.match(/[[:alnum:][:punct:]\s\n]{#{pt.length}}/)
 
-      if prob > 0.6
-        puts "Examining: #{b.hex}"
-        puts "|#{i.chr}| #{result.ascii.inspect}"
+      if prob > 0.6 && english_chars
+        puts "[+] Key #{i.chr.inspect} at #{ctext.hex}"
+        puts "#{pt.ascii.inspect}"
       end
     end
   end
@@ -83,43 +84,37 @@ if DO_RUN.include?(:chal6)
   puts '================Challenge 6:================'
 
   File.open('files/6.txt') do |f|
-    ctext = Bytes.new(f.read().delete!("\n"), :base64)
+    ctext = Bytes.new(f.read.delete!("\n"), :base64)
     keysz = nil
 
-    # Find a likely key size.
+    # Find the likeliest key size.
     top5 = Cryptanalysis.keysz_guesses(ctext)
     keysz = top5[0][0]
 
     # Transpose ciphertext into columns based on a given key size. Only valid
     # English--alphanumeric, punctuation, spaces, newlines--is shown in the
     # output. Repeat until the key is revealed.
-    stride = (0..ctext.length).step(keysz)
-    key_i = 0
+    rows = ctext.length / keysz
 
-    while key_i != keysz
-      col = []
-
-      stride.each { |i| col.push(ctext.bytes[i+key_i]) }
-      col.compact!
-      col = Bytes.new(col)
+    (0..keysz-1).each do |col_i|
+      # Transpose a column of ciphertext.
+      col = Bytes.new()
+      rows.times { |r| col.push(ctext[keysz*r + col_i]) }
 
       (0..127).each do |i|
         # Do a single-character XOR.
-        m = Crypto.vigenere(i.chr, col).ascii
+        ptext = Crypto.vigenere(i.chr, col).ascii
 
         # Display valid English decryptions only.
-        if m.match(/[[:alnum:][:punct:]\s\n]{#{m.length}}/)
-          puts "[+] Decrypted with char #{i.chr.inspect}:", m.inspect 
+        if ptext.match(/[[:alnum:][:punct:]\s\n]{#{ptext.length}}/)
+          puts "[+] Decrypted with char #{i.chr.inspect}:", ptext.inspect 
         end
       end
 
       # Prompt for continuing to next column or exit.
-      print "[?] Continue? (Y/n): "
+      print "[?] Continue? (Y/n)"
       break if $stdin.getch.downcase == 'n'
-      puts
-
-      key_i += 1
-      puts
+      puts "\n\n"
     end
 
 =begin
@@ -133,9 +128,10 @@ if DO_RUN.include?(:chal7)
   puts '================Challenge 7:================'
 
   File.open('files/7.txt') do |f|
-    ctext = Bytes.new(f.read().delete!("\n"), :base64)
+    ctext = Bytes.new(f.read.delete!("\n"), :base64)
 
-    cipher = OpenSSL::Cipher::AES128.new(:ECB).decrypt
+    cipher = OpenSSL::Cipher::AES128.new(:ECB)
+    cipher.decrypt
     cipher.key = "YELLOW SUBMARINE"
 
     ptext = cipher.update(ctext.ascii) + cipher.final
