@@ -90,10 +90,6 @@ class Bytes
 		@bytes.length
 	end
 
-	def to_s
-		self.base64
-	end
-
 	attr_reader :bytes
 
 	protected
