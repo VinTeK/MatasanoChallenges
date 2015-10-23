@@ -3,7 +3,7 @@ require 'base64'
 class Bytes
   include Enumerable
 
-  def initialize(data, encoding = :ascii)
+  def initialize(data = [], encoding = :ascii)
     if data.is_a?(String)
       if encoding == :hex
         data = [data].pack('H*')
@@ -42,7 +42,9 @@ class Bytes
   end
 
   def <<(data)
-    if data.is_a?(Fixnum) && (0..255) === data
+    if data.is_a?(Bytes)
+      @bytes.concat(data.bytes)
+    elsif data.is_a?(Fixnum) && (0..255) === data
       @bytes.push(data)
     elsif data.is_a?(Array) &&
           data.all? { |x| x.is_a?(Fixnum) && (0..255) === x }
