@@ -1,8 +1,7 @@
 require 'base64'
 
-class Bytes
-  include Enumerable
-
+# An Array of byte-sized integers.
+class Bytes < Array
   def initialize(data = [], encoding = :ascii)
     if data.is_a?(String)
       if encoding == :hex
@@ -11,89 +10,35 @@ class Bytes
         data = Base64.strict_decode64(data)
       end
 
-      # Unpack into an array of bytes.
-      @bytes = data.unpack('C*')
+      # Unpack into an Array of bytes.
+      super(data.unpack('C*'))
     elsif data.is_a?(Array)
       unless data.all? { |x| x.is_a?(Fixnum) && (0..255) === x }
-          fail TypeError, "data elements must be byte-sized integers"
+        fail TypeError, "data elements must be byte-sized integers"
       end
 
-      # Directly use argument as an Array of bytes.
-      @bytes = data
+      # Use argument Array as data.
+      super(data)
     else
       fail ArgumentError, "data must be a String or Array"
     end
   end
 
-  def each
-    if block_given?
-      @bytes.each { |b| yield b }
-    else
-      self.to_enum
-    end
+  def ^(other)
+    ret = self.zip(other).delete_if { |b1, b2| b1.nil? or b2.nil? }
+    Bytes.new(ret.map! { |b1, b2| b1 ^ b2 })
   end
 
-  def clone
-    Bytes.new(@bytes.clone)
+  def ascii
+    self.pack('C*')
   end
 
-  def ==(other)
-    self.class == other.class && self.bytes == other.bytes
-  end
-
-  def <<(data)
-    if data.is_a?(Bytes)
-      @bytes.concat(data.bytes)
-    elsif data.is_a?(Fixnum) && (0..255) === data
-      @bytes.push(data)
-    elsif data.is_a?(Array) &&
-          data.all? { |x| x.is_a?(Fixnum) && (0..255) === x }
-      @bytes.concat(data)
-    else
-      fail TypeError, "data elements must be byte-sized integers"
-    end
-  end
-
-	def ^(other)
-		ret = self.zip(other).delete_if { |b1, b2| b1.nil? or b2.nil? }
-		Bytes.new(ret.map! { |b1, b2| b1 ^ b2 })
-	end
-
-	def [](index)
-    if index.is_a?(Range)
-		  Bytes.new(@bytes[index])
-    else
-		  Bytes.new([@bytes[index]])
-    end
-	end
-
-  def slice(index, length = 1)
-    if index.is_a?(Range)
-      self[index]
-    else
-      self[index..index+length-1]
-    end
-  end
-
-	def ascii
-		@bytes.pack('C*')
-	end
-
-	def hex
-		ret = @bytes.map { |b| b.to_s(16) }.join
+  def hex
+    ret = self.map { |b| b.to_s(16) }.join
     (ret.length % 2 == 0) ? ret : '0' << ret
-	end
+  end
 
-	def base64
-		Base64.strict_encode64(@bytes.pack('C*')).chomp
-	end
-
-	def length
-		@bytes.length
-	end
-
-	attr_reader :bytes
-
-	protected
-	attr_writer :bytes
+  def base64
+    Base64.strict_encode64(self.pack('C*')).chomp
+  end
 end
