@@ -33,6 +33,10 @@ class Bytes
     end
   end
 
+  def clone
+    Bytes.new(@bytes.clone)
+  end
+
   def ==(other)
     self.class == other.class && self.bytes == other.bytes
   end
