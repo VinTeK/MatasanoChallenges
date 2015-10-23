@@ -53,7 +53,7 @@ end
 if DO_RUN.include?(:chal4)
   puts '================Challenge 4:================'
 
-  File.readlines('set1_files/4.txt').each do |line|
+  File.readlines('files/4.txt').each do |line|
     b = Bytes.new(line.chomp, :hex)
 
     (0..127).each do |i|
@@ -82,7 +82,7 @@ end
 if DO_RUN.include?(:chal6)
   puts '================Challenge 6:================'
 
-  File.open('set1_files/6.txt') do |f|
+  File.open('files/6.txt') do |f|
     ctext = Bytes.new(f.read().delete!("\n"), :base64)
     keysz = nil
 
@@ -132,7 +132,7 @@ end
 if DO_RUN.include?(:chal7)
   puts '================Challenge 7:================'
 
-  File.open('set1_files/7.txt') do |f|
+  File.open('files/7.txt') do |f|
     ctext = Bytes.new(f.read().delete!("\n"), :base64)
 
     cipher = OpenSSL::Cipher::AES128.new(:ECB).decrypt
@@ -147,7 +147,7 @@ end
 if DO_RUN.include?(:chal8)
   puts '================Challenge 8:================'
 
-  File.open('set1_files/8.txt').each_line do |line|
+  File.open('files/8.txt').each_line do |line|
     b = Bytes.new(line.chomp, :hex)
     puts "ECB detected in ciphertext:", b.hex if Cryptanalysis.is_ecb?(b)
   end
