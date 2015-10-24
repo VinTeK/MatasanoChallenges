@@ -10,6 +10,7 @@ class AES_CBC
 
   def initialize(key, iv = Bytes.new(Array.new(BLOCK_SZ, 0)))
     key = Bytes.new(key) unless key.is_a?(Bytes)
+    iv = Bytes.new(iv) unless iv.is_a?(Bytes)
 
     unless KEY_SZ.include?(key.length)
       fail ArgumentError, 'key size must be 16, 24, or 32 bytes'

@@ -31,6 +31,13 @@ end
 
 if DO_RUN.include?(:chal11)
   puts '================Challenge 11:================'
+
+  # This challenge seems similiar to a CPA game, except the adversary must
+  # distinguish between ECB and CBC. Since we are allowed to choose our
+  # plaintext to win, a 48 byte message of zeroes should enable 100% win rate.
+  ptext = Bytes.new(Array.new(48, 0))
+  mystery = Crypto.encryption_mode_oracle(ptext)
+  puts Cryptanalysis.is_ecb?(mystery) ? "ECB detected." : "Must be CBC then?"
 end
 
 if DO_RUN.include?(:chal12)
